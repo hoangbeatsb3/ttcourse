@@ -12,8 +12,8 @@ import (
 	"github.com/go-chi/jsonp"
 	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
-	"gitlab.com/hoangbeatsb3/ttcourse/config"
-	"gitlab.com/hoangbeatsb3/ttcourse/service"
+	"github.com/hoangbeatsb3/ttcourse/config"
+	"github.com/hoangbeatsb3/ttcourse/service"
 	"golang.org/x/net/context"
 )
 
