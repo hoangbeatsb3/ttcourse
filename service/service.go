@@ -8,9 +8,9 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/prometheus/common/log"
-	"gitlab.com/hoangbeatsb3/ttcourse/config"
-	"gitlab.com/hoangbeatsb3/ttcourse/model"
-	"gitlab.com/hoangbeatsb3/ttcourse/repository"
+	"github.com/hoangbeatsb3/ttcourse/config"
+	"github.com/hoangbeatsb3/ttcourse/model"
+	"github.com/hoangbeatsb3/ttcourse/repository"
 )
 
 var repo = repository.NewRepo(config.RedisAddr)

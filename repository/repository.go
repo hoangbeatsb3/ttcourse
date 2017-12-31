@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/hoangbeatsb3/ttcourse/model"
+	"github.com/hoangbeatsb3/ttcourse/model"
 	"github.com/garyburd/redigo/redis"
 	"github.com/prometheus/common/log"
 )
