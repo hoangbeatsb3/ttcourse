@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gitlab.com/hoangbeatsb3/ttcourse/config"
-	"gitlab.com/hoangbeatsb3/ttcourse/controller"
+	"github.com/hoangbeatsb3/ttcourse/config"
+	"github.com/hoangbeatsb3/ttcourse/controller"
 )
 
 func main() {
