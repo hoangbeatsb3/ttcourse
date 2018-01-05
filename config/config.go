@@ -41,5 +41,8 @@ func (s *Server) GetFullAddr() string {
 }
 
 func (s *Server) GetRedisPort() string {
-	return s.RedisPort
+	if s.RedisPort == "" {
+		return s.RedisPort
+	}
+	return fmt.Sprintf("%s", s.RedisPort)
 }

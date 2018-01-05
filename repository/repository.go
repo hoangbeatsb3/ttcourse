@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"github.com/garyburd/redigo/redis"
+	// "github.com/hoangbeatsb3/ttcourse/config"
+	"../config"
 	"github.com/hoangbeatsb3/ttcourse/model"
 	"github.com/sirupsen/logrus"
 )
@@ -16,15 +18,17 @@ type Repo struct {
 
 var courseKey = "ttcourse:"
 
-func NewRepo(port string) (*Repo, error) {
-	c, err := redis.Dial("tcp", port)
+func NewRepo() *Repo {
+	c, err := redis.Dial("tcp", config.LoadEnvConfig().GetRedisPort())
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
-	return &Repo{
+	repo := &Repo{
 		c: &c,
-	}, nil
+	}
+
+	return repo
 }
 
 func (r *Repo) FindAllCourses() (model.Courses, error) {
