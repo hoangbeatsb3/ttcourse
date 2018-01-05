@@ -7,7 +7,6 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/hoangbeatsb3/ttcourse/model"
-	"github.com/lnquy/fugu/config"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,8 +16,8 @@ type Repo struct {
 
 var courseKey = "ttcourse:"
 
-func NewRepo(cfg *config.Config) (*Repo, error) {
-	c, err := redis.Dial("tcp", cfg.Server.GetRedisPort())
+func NewRepo(port string) (*Repo, error) {
+	c, err := redis.Dial("tcp", port)
 	if err != nil {
 		return nil, err
 	}

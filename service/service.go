@@ -14,7 +14,7 @@ import (
 )
 
 var cfg = config.LoadEnvConfig()
-var repo = repository.NewRepo(cfg)
+var repo = repository.NewRepo(cfg.RedisPort)
 
 func FindAllCourses(w http.ResponseWriter, r *http.Request) {
 
