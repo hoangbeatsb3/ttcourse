@@ -7,13 +7,14 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/prometheus/common/log"
 	"github.com/hoangbeatsb3/ttcourse/config"
 	"github.com/hoangbeatsb3/ttcourse/model"
 	"github.com/hoangbeatsb3/ttcourse/repository"
+	"github.com/prometheus/common/log"
 )
 
-var repo = repository.NewRepo(config.RedisAddr)
+var cfg = config.LoadEnvConfig()
+var repo = repository.NewRepo(cfg)
 
 func FindAllCourses(w http.ResponseWriter, r *http.Request) {
 
@@ -76,6 +77,12 @@ func CreateCourse(w http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(w).Encode(err); err != nil {
 			panic(err)
 		}
+	}
+
+	course.Alias = strings.ToLower(course.Name)
+	course.Vote = 0
+	if course.Participant != nil {
+		course.Vote = 1
 	}
 	repo.CreateCourse(course)
 

@@ -5,73 +5,82 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hoangbeatsb3/ttcourse/model"
 	"github.com/garyburd/redigo/redis"
-	"github.com/prometheus/common/log"
+	"github.com/hoangbeatsb3/ttcourse/model"
+	"github.com/lnquy/fugu/config"
+	"github.com/sirupsen/logrus"
 )
 
 type Repo struct {
 	c *redis.Conn
 }
 
-func NewRepo(port string) *Repo {
-	c, err := redis.Dial("tcp", port)
-	HandleError(err)
+var courseKey = "ttcourse:"
 
-	r := &Repo{
-		c: &c,
+func NewRepo(cfg *config.Config) (*Repo, error) {
+	c, err := redis.Dial("tcp", cfg.Server.GetRedisPort())
+	if err != nil {
+		return nil, err
 	}
-	return r
+
+	return &Repo{
+		c: &c,
+	}, nil
 }
 
-func (r *Repo) FindAllCourses() model.Courses {
+func (r *Repo) FindAllCourses() (model.Courses, error) {
 
 	c := *r.c
-	keys, err := c.Do("KEYS", "trainingtoolcourse:*")
+	keys, err := c.Do("KEYS", courseKey+"*")
 
-	HandleError(err)
+	if err != nil {
+		return nil, err
+	}
 
 	var courses model.Courses
 	for _, k := range keys.([]interface{}) {
 
 		var course model.Course
 		reply, err := c.Do("GET", k.([]byte))
-		HandleError(err)
+
+		if err != nil {
+			return nil, err
+		}
+
 		if err := json.Unmarshal(reply.([]byte), &course); err != nil {
-			panic(err)
+			return nil, err
 		}
 		courses = append(courses, course)
 	}
 
-	return courses
+	return courses, nil
 }
 
-func (r *Repo) FindCourseByName(name string) model.Courses {
+func (r *Repo) FindCourseByName(name string) (model.Courses, error) {
 
 	c := *r.c
 
 	var courses model.Courses
-	keys, err := r.GetKeys("trainingtoolcourse:*" + name + "*")
+	keys, err := r.GetKeys(courseKey + "*" + name + "*")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	if len(keys) <= 0 {
-		return courses
-	}
 	for _, v := range keys {
-		v = strings.Replace(v, "trainingtoolcourse:", "", -1)
+		v = strings.Replace(v, courseKey, "", -1)
 		var course model.Course
-		reply, err := c.Do("GET", "trainingtoolcourse:"+v)
-		HandleError(err)
-		log.Info("GET OK")
+		reply, err := c.Do("GET", courseKey+v)
+		if err != nil {
+			return nil, err
+		}
+		logrus.Info("GET OK")
 		if err = json.Unmarshal(reply.([]byte), &course); err != nil {
-			panic(err)
+			return nil, err
 		}
 		courses = append(courses, course)
 	}
 
-	return courses
+	return courses, nil
 }
 
 func (r *Repo) GetKeys(pattern string) ([]string, error) {
@@ -79,6 +88,7 @@ func (r *Repo) GetKeys(pattern string) ([]string, error) {
 	c := *r.c
 
 	iter := 0
+
 	keys := []string{}
 	for {
 		arr, err := redis.Values(c.Do("SCAN", iter, "MATCH", pattern))
@@ -86,8 +96,14 @@ func (r *Repo) GetKeys(pattern string) ([]string, error) {
 			return keys, fmt.Errorf("error retrieving '%s' keys", pattern)
 		}
 
-		iter, _ = redis.Int(arr[0], nil)
-		k, _ := redis.Strings(arr[1], nil)
+		iter, err := redis.Int(arr[0], nil)
+		if err != nil {
+			return nil, err
+		}
+		k, err := redis.Strings(arr[1], nil)
+		if err != nil {
+			return nil, err
+		}
 		keys = append(keys, k...)
 
 		if iter == 0 {
@@ -98,69 +114,69 @@ func (r *Repo) GetKeys(pattern string) ([]string, error) {
 	return keys, nil
 }
 
-func (r *Repo) FindCourseByAlias(name string) model.Course {
+func (r *Repo) FindCourseByAlias(name string) (model.Course, error) {
 
 	c := *r.c
 	var course model.Course
 
-	reply, err := c.Do("GET", "trainingtoolcourse:"+name)
-	HandleError(err)
+	reply, err := c.Do("GET", courseKey+name)
+	if err != nil {
+		return course, err
+	}
 
 	if err = json.Unmarshal(reply.([]byte), &course); err != nil {
-		panic(err)
+		return course, err
 	}
 
-	log.Info("Reply OK")
-	return course
+	logrus.Info("Reply OK")
+	return course, nil
 }
 
-func (r *Repo) CreateCourse(p model.Course) {
+func (r *Repo) CreateCourse(p model.Course) (model.Course, error) {
 
 	c := *r.c
-
-	p.Alias = strings.ToLower(p.Name)
-	p.Vote = 0
-	if p.Participant != nil {
-		p.Vote = 1
-	}
 
 	b, err := json.Marshal(p)
-	HandleError(err)
-	reply, err := c.Do("SET", "trainingtoolcourse:"+p.Alias, b)
-	HandleError(err)
-	log.Info("Reply ", reply)
+	if err != nil {
+		return p, err
+	}
+	reply, err := c.Do("SET", courseKey+p.Alias, b)
+	if err != nil {
+		return p, err
+	}
+	logrus.Info("Reply ", reply)
+	return p, nil
 }
 
-func (r *Repo) CheckIfExists(p model.Course) (bool, model.Course) {
+func (r *Repo) CheckIfExists(p model.Course) (model.Course, error) {
 	c := *r.c
-	reply, err := c.Do("GET", "trainingtoolcourse:"+strings.ToLower(p.Name))
+
+	var course model.Course
+	reply, err := c.Do("GET", courseKey+strings.ToLower(p.Name))
 	if err != nil {
-		panic(err)
+		return course, err
 	}
 
 	if reply == nil {
-		return false, p // false means doesn't exist
+		return course, err
 	}
 
-	var course model.Course
 	if err = json.Unmarshal(reply.([]byte), &course); err != nil {
-		panic(err)
+		return course, err
 	}
-	return true, course
+	return course, nil
 }
 
-func (r *Repo) Vote(p model.Course) {
+func (r *Repo) Vote(p model.Course) (model.Course, error) {
 
 	c := *r.c
 
 	b, err := json.Marshal(p)
-	reply, err := c.Do("SET", "trainingtoolcourse:"+strings.ToLower(p.Name), b)
-	log.Info("Vote Status: ", reply)
-	HandleError(err)
-}
-
-func HandleError(err error) {
+	reply, err := c.Do("SET", courseKey+strings.ToLower(p.Name), b)
+	logrus.Info("Vote Status: ", reply)
 	if err != nil {
-		panic(err)
+		return p, err
 	}
+
+	return p, nil
 }

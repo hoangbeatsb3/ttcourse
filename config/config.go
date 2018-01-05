@@ -17,10 +17,11 @@ type (
 	}
 
 	Server struct {
-		IP       string        `envconfig:"SERVER_IP" default:"127.0.0.1"`
-		Port     string        `envconfig:"SERVER_PORT" default:"8088"`
-		RTimeout time.Duration `envconfig:"SERVER_READ_TIMEOUT" default:"15s"`
-		WTimeout time.Duration `envconfig:"SERVER_WRITE_TIMEOUT" default:"15s"`
+		IP        string        `envconfig:"SERVER_IP" default:"127.0.0.1"`
+		Port      string        `envconfig:"SERVER_PORT" default:"8088"`
+		RedisPort string        `envconfig:"REDIS_PORT" default:":6379"`
+		RTimeout  time.Duration `envconfig:"SERVER_READ_TIMEOUT" default:"15s"`
+		WTimeout  time.Duration `envconfig:"SERVER_WRITE_TIMEOUT" default:"15s"`
 	}
 )
 
@@ -37,4 +38,8 @@ func (s *Server) GetFullAddr() string {
 		return s.IP
 	}
 	return fmt.Sprintf("%s:%s", s.IP, s.Port)
+}
+
+func (s *Server) GetRedisPort() string {
+	return s.RedisPort
 }
